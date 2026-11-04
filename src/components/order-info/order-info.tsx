@@ -1,44 +1,68 @@
 import { Preloader, OrderInfoUI } from '@ui';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 
-import type { TIngredient } from '@utils-types';
+import { selectIngredients } from '../../services/slices/ingredientsSlice';
+import {
+  fetchOrderByNumber,
+  selectOrderModalData,
+  selectViewedOrder,
+  selectViewedOrderLoading,
+} from '../../services/slices/orderSlice';
+import { useDispatch, useSelector } from '../../services/store';
+
+import type { TOrder } from '@utils-types';
+
+type TLocationState = { background?: Location } | null;
 
 export const OrderInfo = (): React.JSX.Element => {
-  /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0,
-  };
+  const { number } = useParams<{ number: string }>();
+  const orderNumber = Number(number);
 
-  const ingredients: TIngredient[] = [];
+  const location = useLocation();
+  const isModal = Boolean((location.state as TLocationState | null)?.background);
 
-  /* Готовим данные для отображения */
+  const dispatch = useDispatch();
+  const ingredients = useSelector(selectIngredients);
+  const modalOrder = useSelector(selectOrderModalData);
+  const viewedOrder = useSelector(selectViewedOrder);
+  const isLoadingViewed = useSelector(selectViewedOrderLoading);
+
+  const storeOrder: TOrder | null =
+    modalOrder && modalOrder.number === orderNumber
+      ? modalOrder
+      : viewedOrder && viewedOrder.number === orderNumber
+        ? viewedOrder
+        : null;
+
+  useEffect(() => {
+    if (Number.isNaN(orderNumber)) return;
+    if (storeOrder) return;
+    void dispatch(fetchOrderByNumber(orderNumber));
+  }, [dispatch, orderNumber, storeOrder]);
+
+  const orderData = storeOrder;
+
   const orderInfo = useMemo(() => {
     if (!orderData || !ingredients.length) return null;
 
     const date = new Date(orderData.createdAt);
 
-    type TIngredientsWithCount = Record<string, TIngredient & { count: number }>;
+    type TIngredientsWithCount = Record<
+      string,
+      (typeof ingredients)[number] & { count: number }
+    >;
 
     const ingredientsInfo = orderData.ingredients.reduce(
       (acc: TIngredientsWithCount, item) => {
         if (!acc[item]) {
           const ingredient = ingredients.find((ing) => ing._id === item);
           if (ingredient) {
-            acc[item] = {
-              ...ingredient,
-              count: 1,
-            };
+            acc[item] = { ...ingredient, count: 1 };
           }
         } else {
           acc[item].count++;
         }
-
         return acc;
       },
       {}
@@ -49,17 +73,35 @@ export const OrderInfo = (): React.JSX.Element => {
       0
     );
 
-    return {
-      ...orderData,
-      ingredientsInfo,
-      date,
-      total,
-    };
+    return { ...orderData, ingredientsInfo, date, total };
   }, [orderData, ingredients]);
 
-  if (!orderInfo) {
+  if (isLoadingViewed || !ingredients.length) {
     return <Preloader />;
   }
 
+  if (!orderInfo) {
+    return <p className="text text_type_main-medium">Заказ не найден</p>;
+  }
+
+  // при прямом переходе — отдельная страница с заголовком
+  if (!isModal) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <h2 className="text text_type_main-large mt-10 mb-5">
+          #{String(orderInfo.number).padStart(6, '0')}
+        </h2>
+        <OrderInfoUI orderInfo={orderInfo} />
+      </div>
+    );
+  }
+
+  // в модалке — только контент, заголовок рисует ModalUI
   return <OrderInfoUI orderInfo={orderInfo} />;
 };
