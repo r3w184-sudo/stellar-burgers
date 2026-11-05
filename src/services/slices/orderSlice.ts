@@ -60,6 +60,8 @@ const orderSlice = createSlice({
   reducers: {
     clearOrderModal: (state) => {
       state.orderModalData = null;
+      state.orderRequest = false;
+      state.error = null;
     },
     clearViewedOrder: (state) => {
       state.viewedOrder = null;

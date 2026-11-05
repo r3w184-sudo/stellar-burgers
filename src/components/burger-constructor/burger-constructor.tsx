@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
-  clearConstructor,
   selectConstructorBun,
   selectConstructorIngredients,
 } from '../../services/slices/constructorSlice';
@@ -42,7 +41,6 @@ export const BurgerConstructor = (): React.JSX.Element => {
 
   const closeOrderModal = (): void => {
     dispatch(clearOrderModal());
-    dispatch(clearConstructor());
   };
 
   const price = useMemo(

@@ -2,11 +2,14 @@ import { ProfileUI } from '@ui-pages';
 import { type SyntheticEvent, useEffect, useState } from 'react';
 
 import {
+  clearUserError,
   selectUser,
   selectUserLoading,
   updateUser,
 } from '../../services/slices/userSlice';
 import { useDispatch, useSelector } from '../../services/store';
+
+import type { TRegisterData } from '@api';
 
 export const Profile = (): React.JSX.Element => {
   const dispatch = useDispatch();
@@ -19,6 +22,10 @@ export const Profile = (): React.JSX.Element => {
     email: user?.email ?? '',
     password: '',
   });
+
+  useEffect(() => {
+    dispatch(clearUserError());
+  }, [dispatch]);
 
   useEffect(() => {
     setFormValue((prevState) => ({
@@ -37,7 +44,7 @@ export const Profile = (): React.JSX.Element => {
     e.preventDefault();
     if (isLoading || !user) return;
 
-    const payload: { name?: string; email?: string; password?: string } = {};
+    const payload: Partial<TRegisterData> = {};
     if (formValue.name !== user.name) payload.name = formValue.name;
     if (formValue.email !== user.email) payload.email = formValue.email;
     if (formValue.password) payload.password = formValue.password;

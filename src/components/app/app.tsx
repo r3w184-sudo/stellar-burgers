@@ -2,8 +2,8 @@ import {
   AppHeader,
   GuestRoute,
   IngredientDetails,
+  Modal,
   OrderInfo,
-  OrderModal,
   ProtectedRoute,
 } from '@components';
 import {
@@ -17,9 +17,12 @@ import {
   ProfileOrders,
   NotFound404,
 } from '@pages';
-import { ModalUI, Preloader } from '@ui';
+import { Preloader } from '@ui';
+import { clsx } from 'clsx';
 import { useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, useMatch } from 'react-router-dom';
+
+import { formatOrderNumber } from '@utils/formated.ts';
 
 import {
   fetchIngredients,
@@ -89,6 +92,10 @@ const RouteComponent = (): React.JSX.Element => {
   const navigate = useNavigate();
   const background = (location.state as { background?: Location } | null)?.background;
 
+  const feedOrderMatch = useMatch('/feed/:number');
+  const profileOrderMatch = useMatch('/profile/orders/:number');
+  const orderNumber = feedOrderMatch?.params.number ?? profileOrderMatch?.params.number;
+
   const closeModal = (): void => {
     void navigate(-1);
   };
@@ -101,8 +108,30 @@ const RouteComponent = (): React.JSX.Element => {
         <Route path="/feed" element={<Feed />} />
 
         {/* Прямой переход — страницы, а не модалки */}
-        <Route path="/ingredients/:id" element={<IngredientDetails />} />
-        <Route path="/feed/:number" element={<OrderInfo />} />
+        <Route
+          path="/ingredients/:id"
+          element={
+            <div className={styles.detailPageWrap}>
+              <h2 className={clsx(styles.detailHeader, 'text text_type_main-large')}>
+                Детали ингредиента
+              </h2>
+              <IngredientDetails />
+            </div>
+          }
+        />
+
+        {/* Страница заказа из ленты */}
+        <Route
+          path="/feed/:number"
+          element={
+            <div className={styles.detailPageWrap}>
+              <h2 className={clsx(styles.detailHeader, 'text text_type_main-large')}>
+                {formatOrderNumber(orderNumber)}
+              </h2>
+              <OrderInfo />
+            </div>
+          }
+        />
 
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<Login />} />
@@ -114,7 +143,19 @@ const RouteComponent = (): React.JSX.Element => {
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/orders" element={<ProfileOrders />} />
-          <Route path="/profile/orders/:number" element={<OrderInfo />} />
+
+          {/* Страница заказа из истории */}
+          <Route
+            path="/profile/orders/:number"
+            element={
+              <div className={styles.detailPageWrap}>
+                <h2 className={clsx(styles.detailHeader, 'text text_type_main-large')}>
+                  {formatOrderNumber(orderNumber)}
+                </h2>
+                <OrderInfo />
+              </div>
+            }
+          />
         </Route>
 
         <Route path="*" element={<NotFound404 />} />
@@ -126,13 +167,29 @@ const RouteComponent = (): React.JSX.Element => {
           <Route
             path="/ingredients/:id"
             element={
-              <ModalUI title="Детали ингредиента" onClose={closeModal}>
+              <Modal title="Детали ингредиента" onClose={closeModal}>
                 <IngredientDetails />
-              </ModalUI>
+              </Modal>
             }
           />
-          <Route path="/feed/:number" element={<OrderModal />} />
-          <Route path="/profile/orders/:number" element={<OrderModal />} />
+          <Route
+            path="/feed/:number"
+            element={
+              <Modal title={formatOrderNumber(orderNumber)} onClose={closeModal}>
+                <OrderInfo />
+              </Modal>
+            }
+          />
+          <Route element={<ProtectedRoute />}>
+            <Route
+              path="/profile/orders/:number"
+              element={
+                <Modal title={formatOrderNumber(orderNumber)} onClose={closeModal}>
+                  <OrderInfo />
+                </Modal>
+              }
+            />
+          </Route>
         </Routes>
       )}
     </>

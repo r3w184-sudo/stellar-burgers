@@ -4,7 +4,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { selectUser, selectIsAuthChecked } from '../../services/slices/userSlice';
 import { useSelector } from '../../services/store';
 
-type TLocationState = { from?: { pathname?: string } } | null;
+export type TLocationState = { from?: { pathname?: string } } | null;
 
 export const GuestRoute = (): React.JSX.Element => {
   const location = useLocation();

@@ -1,6 +1,6 @@
 import { Preloader, OrderInfoUI } from '@ui';
 import { useEffect, useMemo } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import { selectIngredients } from '../../services/slices/ingredientsSlice';
 import {
@@ -13,14 +13,9 @@ import { useDispatch, useSelector } from '../../services/store';
 
 import type { TOrder } from '@utils-types';
 
-type TLocationState = { background?: Location } | null;
-
 export const OrderInfo = (): React.JSX.Element => {
   const { number } = useParams<{ number: string }>();
   const orderNumber = Number(number);
-
-  const location = useLocation();
-  const isModal = Boolean((location.state as TLocationState | null)?.background);
 
   const dispatch = useDispatch();
   const ingredients = useSelector(selectIngredients);
@@ -84,24 +79,5 @@ export const OrderInfo = (): React.JSX.Element => {
     return <p className="text text_type_main-medium">Заказ не найден</p>;
   }
 
-  // при прямом переходе — отдельная страница с заголовком
-  if (!isModal) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <h2 className="text text_type_main-large mt-10 mb-5">
-          #{String(orderInfo.number).padStart(6, '0')}
-        </h2>
-        <OrderInfoUI orderInfo={orderInfo} />
-      </div>
-    );
-  }
-
-  // в модалке — только контент, заголовок рисует ModalUI
   return <OrderInfoUI orderInfo={orderInfo} />;
 };

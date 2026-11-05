@@ -1,12 +1,12 @@
 import { createSlice, nanoid, type PayloadAction } from '@reduxjs/toolkit';
+import { orderBurger } from '@slices/orderSlice.ts';
 
 import type { RootState } from '../store';
-import type { TConstructorIngredient, TIngredient } from '@utils-types';
-
-type TConstructorState = {
-  bun: TConstructorIngredient | null; // ← было TIngredient | null
-  ingredients: TConstructorIngredient[];
-};
+import type {
+  TConstructorIngredient,
+  TConstructorState,
+  TIngredient,
+} from '@utils-types';
 
 export const initialState: TConstructorState = {
   bun: null,
@@ -42,6 +42,13 @@ const constructorSlice = createSlice({
       state.bun = null;
       state.ingredients = [];
     },
+  },
+  extraReducers: (builder) => {
+    // очищаем конструктор только после успешного ответа сервера
+    builder.addCase(orderBurger.fulfilled, (state) => {
+      state.bun = null;
+      state.ingredients = [];
+    });
   },
 });
 

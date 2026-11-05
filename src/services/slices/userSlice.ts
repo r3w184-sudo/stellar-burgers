@@ -121,7 +121,11 @@ export const updateUser = createAsyncThunk<
 const userSlice = createSlice({
   name: 'user',
   initialState,
-  reducers: {},
+  reducers: {
+    clearUserError: (state) => {
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       // register
@@ -194,6 +198,8 @@ const userSlice = createSlice({
       });
   },
 });
+
+export const { clearUserError } = userSlice.actions;
 
 export const userReducer = userSlice.reducer;
 
